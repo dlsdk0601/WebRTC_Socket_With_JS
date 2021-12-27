@@ -1,0 +1,4 @@
+{
+    "ext":"js,pug,json",
+    "exec": "babel-node src/server.js"
+}
