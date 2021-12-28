@@ -29,14 +29,13 @@ socket.addEventListener("close", () => {
 }); // 서버와의 연결이 끊겼을떄 
 
 
-setTimeout(()=> {
-    socket.send("hello from the browser");
-}, 10000);
-
 function handleSubmit(e){
     e.preventDefault();
     const input = messageForm.querySelector("input");
-    socket.send(makeMessage("new_massage", input.value));
+    socket.send(makeMessage("new_message", input.value));
+    const li = document.createElement("li");
+    li.innerText = `You: ${input.value}`;
+    messageList.append(li);
     input.value = "";
 }
 
@@ -44,6 +43,7 @@ const handleNickSubmit = (e) => {
     e.preventDefault();
     const input = nickForm.querySelector("input");
     socket.send(makeMessage("nickname", input.value));
+    input.value = "";
 }
 
 messageForm.addEventListener("submit", handleSubmit);

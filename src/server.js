@@ -26,17 +26,25 @@ const sockets = []; //fake db 서버에 연결된 누군가를 여기에 넣을�
 
 wss.on("connection", (socket) => {
     sockets.push(socket);
+    socket["nickname"] = "none";  //닉네임 설정 방법
 
     socket.on("close", () => {
         console.log("disconnected from the Browser")
     }); //프론트가 브라우저를 꺼버렸을 경우
 
-    socket.on("message", (message) => {
-        console.log(message.toString('utf8'));
-        sockets.forEach(aSocket => aSocket.send(message.toString("utf8")));
-        //처음에 접속한 브라우저에게 보내는 방법
+    socket.on("message", (msg) => {
 
+        const message = JSON.parse(msg.toString('utf8'));
         
+        switch(message.type){
+            case "new_message":
+                sockets.forEach(aSocket => aSocket.send(`${socket.nickname} : ${message.payload}`));
+                //처음에 접속한 브라우저에게 보내는 방법
+                break;
+            case "nickname":
+                socket["nickname"] = message.payload
+                break;
+        }
         // socket.send(message.toString('utf8'));
     }) // 프론트에서 보낸 message 받기 
 
