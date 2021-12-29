@@ -10,11 +10,15 @@ html(lang="en")
     header 
         h1 It works!
     main 
-        form#nick
-            input(type="text", placeholer="choose a nickname", required)
-            button Save
-        ul
-        form#message 
-            input(type="text", placeholer="write a msg", required) 
-            button send
+        div#welcome
+            form
+                input(placeholder="room name", requried, type="text")
+        div#room
+            h3
+            ul 
+            form
+                input(placeholder="message", requried, type="text")
+                button Send
+    script(src="/socket.io/socket.io.js")
+    //- socket을 install 하면 기본적으로 제공해주는js 프론트단에서 설치 꼭 필요
     script(src="/public/js/app.js")

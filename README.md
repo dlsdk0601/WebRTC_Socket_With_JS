@@ -1,6 +1,6 @@
 # Zoom_CLone
 
-> WebRTC와 Websockets을 공부 하기 위한 레파지토리입니다!
+> socket.io와 Websockets을 공부 하기 위한 레파지토리입니다!
 
 ## nodeJs
 
@@ -83,3 +83,44 @@ ex
     });
 ```
 
+---
+
+# socket.io
+
+> websocket의 부가기능이 아닌 리얼타임을 위한 프레임 워크. 
+
+## nodeJS
+
+> websocket과 마찬가지로 서버를 만들어 준다 
+
+```
+    const wsServer = new Server(server);
+```
+
+>  연결은 websocket과 아주 흡사하다 
+
+```
+    wsServer.on("connection", socket => {
+        socket.onAny((e) => {
+            console.log(`socket event : ${e}`);
+        });
+
+        socket.on("enter_room", (roomname, done) => {            
+            socket.join(roomname)
+            done();
+            socket.to(roomname).emit("welcome");
+        })
+    })
+```
+
+## JavaScript
+
+> websocket과 흡사한 방식으로 서버와 연결한다
+
+```
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = form.querySelector("input");
+        socket.emit("enter_room", input.value, showRoom);
+    });
+```
