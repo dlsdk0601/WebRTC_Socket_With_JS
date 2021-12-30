@@ -1,6 +1,7 @@
 import http from "http"
 import express from "express";
 import WebSocket from "ws";
+import { instrument } from "@socket.io/admin-ui";
 
 import { Socket, Server } from "socket.io";
 
@@ -16,8 +17,16 @@ const server = http.createServer(app);
 //이렇게 두가지 안해도됨. 소켓만 필요하면 소켓만 해도 무방
 
 //socket.io 버전
-const wsServer = new Server(server);
+const wsServer = new Server(server, {
+    cors: {
+        origin: ["https://admin.socket.io"],
+        credentials: true
+    }
+}); //어드민 페이지 보기위한 셋팅
  
+instrument(wsServer, {
+    auth: false
+}) //어드민 페이지 보안 설정 => 설정하면 아이디비밀번호 설정 가능
 
 
 app.set("view engine", "pug");
@@ -32,19 +41,48 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 
 
 //---------------------------socket.io 버전
+
+function publicRooms(){
+    const { sockets: {adapter: { sids, rooms } } } = wsServer
+    //ws 서버에 adapter라는 기능이 있음 => 엄청 큰 앱은 하나의 db로 모든 유저를 다루지 않는다
+    //같은 프론트단을 보더라도 다른 서버를 이용 할 수도있음 
+    //이론상 다른 서버에 있는 유저끼리는 정보를 주고받고 못하지만 adapter가 해준다
+
+
+    // const sids = wsServer.sockets.adapter.sids;
+    // const rooms = wsServer.sockets.adapter.rooms;
+
+    const publicRooms = [];
+    rooms.forEach( (_, key) => {
+        if(sids.get(key) === undefined) { //privite room을 찾아줌
+            publicRooms.push(key);
+
+        }
+    })
+
+
+    return publicRooms;
+}
+
+function countRoom(roomName){
+    return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
+
+
 wsServer.on("connection", socket => {
+    socket["nickname"] = "someone";
     socket.onAny((e) => {
         console.log(`socket event : ${e}`);
         //미들웨어같이 어디서든 콘솔 찍어줌
     });
 
-    socket.on("enter_room", (roomname, done) => {
+    socket.on("enter_room", (roominput, nickname, done) => {
         
-        
-        socket.join(roomname)
-        done();
+        socket["nickname"] = nickname;
+        socket.join(roominput);
+        done(nickname);
 
-        socket.to(roomname).emit("welcome");
+        socket.to(roominput).emit("welcome", socket.nickname, countRoom(roominput));
         //방에 잇는 모두에세 메세지 보내기 
         //welcome 이라는 이벤트를 모두에게 전송
 
@@ -55,7 +93,24 @@ wsServer.on("connection", socket => {
             //이건 프론트단에서 실행되는 함수임. 
             //그런데 콜백함수의 파라미터는 백엔드에서 설정 가능 
         // }, 5000);
+
+        wsServer.sockets.emit("room_change", publicRooms());
     })
+
+    socket.on("disconnecting", () => { //방을 떠나기 직전
+        socket.rooms.forEach(room => {
+            socket.to(room).emit("bye", socket.nickname, countRoom(room) -1 ); //본인이 떠나기 직전에 실행되니, 본인 퐇마그래서 -1 해줘야함
+        });
+    })
+    socket.on("disconnect", () => {  //방을 떠난 후 
+        wsServer.sockets.emit("room_change", publicRooms());
+        //방을 떠났기 떄문에 빈 배열 출력
+    })
+    socket.on("new_message", (msg, room, done) => {
+        socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);
+        done();
+    })
+    // socket.on("nickname", (name) => socket["nickname"] = name);
 })
 
 
@@ -96,11 +151,6 @@ wsServer.on("connection", socket => {
 
 
 //socket.io
-
-
-
-
-
 
 
 server.listen(3000, handleListen)
