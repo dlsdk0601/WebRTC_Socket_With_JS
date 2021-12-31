@@ -10,20 +10,39 @@ html(lang="en")
     header 
         h1 It works!
     main    
-        div#welcome
-            form
-                input#roomname(placeholder="room name", requried, type="text")
-                input#name(placeholder="nickname", requried, type="text")
-                button Save
-        div#room
-            h3
-            ul 
-            form#msg
-                input(placeholder="message", requried, type="text")
-                button Send
-        div#roomList
-            h4 Open Rooms:
-            ul
+        //- video call
+        div#myStream
+            video#myFace(autoplay, playsinline, width="400", height="400")
+            button#mute Mute
+            button#camera trun Camre Off
+            select#cameras
+                option(value="device") Face Camera
+        //- playsinline => 모바일 버전에서 가끔 전체화면으로 재생되는 경우가있는데 그걸 방지하는 속성
+
+
+
+
+
+
+
+
+
+
+        //---------------chatting Room 
+        //- div#welcome
+        //-     form
+        //-         input#roomname(placeholder="room name", requried, type="text")
+        //-         input#name(placeholder="nickname", requried, type="text")
+        //-         button Save
+        //- div#room
+        //-     h3
+        //-     ul 
+        //-     form#msg
+        //-         input(placeholder="message", requried, type="text")
+        //-         button Send
+        //- div#roomList
+        //-     h4 Open Rooms:
+        //-     ul
     script(src="/socket.io/socket.io.js")
     //- socket을 install 하면 기본적으로 제공해주는js 프론트단에서 설치 꼭 필요
     script(src="/public/js/app.js")
