@@ -13,15 +13,21 @@
     const wss = new WebSocket.Server({server});
     //websocket 서버
 ```
+<br />
 
 > websocket이 연결이 돼있는 경우 콜백 함수를 불러 실행 시킨다 
     addEventListener와 매우 흡사한 형식
 
+<br />
+
 > 콜백 함수는 socket을 파라미터로 받는다
+
 ex
 ```
     wss.on( "connection", CB(socket) )
 ```
+
+<br />
 
 > 파라미터로 받는 socket으로 메시지들을 서로 주고 받을 수 있다
 
@@ -45,7 +51,11 @@ ex
     })
 ```
 
+<br />
+
 ## JavaScript 
+
+<br />
 
 > websocket은 js에서 내장되어있는 api 이다.
 
@@ -53,6 +63,7 @@ ex
     const socket = new WebSocket(`ws://${window.location.host}`); 
 ```
 
+<br />
 
 > 서버에서 어떠한 응답을 받았을 때, addEventListener로 받는다. 
 
@@ -65,6 +76,8 @@ ex
         //받은 메세지를 li태그에 넣어서 ul태그에 append 시킨다. 
     });
 ```
+
+<br />
 
 > 서버로 보낼때 또한 마찬가지이다.
 
@@ -83,7 +96,9 @@ ex
     });
 ```
 
+<br />
 ---
+<br />
 
 # socket.io
 
@@ -91,12 +106,16 @@ ex
 
 > 프론트단과 서버단에서 서로 emit으로 이벤트를 만들고, on으로 이벤트를 받는다
 
+<br />
+
 app.js
 ```
     socket.emit("new_message", value, roomname, () => {
         addMessage(`You: ${value}`);
     });
 ```
+
+<br />
 
 server.js
 ```
@@ -106,13 +125,19 @@ server.js
     })
 ```
 
+<br />
+
 ## nodeJS
+
+<br />
 
 > websocket과 마찬가지로 서버를 만들어 준다 
 
 ```
     const wsServer = new Server(server);
 ```
+
+<br />
 
 >  연결은 websocket과 아주 흡사하다 
 
@@ -130,6 +155,8 @@ server.js
     })
 ```
 
+<br />
+
 > adapter => 다른 서버에 있는 유저끼리는 정보를 주고 받을 수 있게 adapter가 도와준다.
 
 ```
@@ -146,6 +173,8 @@ server.js
     }
 ```
 
+<br />
+
 > size => room에 접속한 유저의 수를 알 수 있다.
 
 ```
@@ -154,17 +183,23 @@ server.js
     }
 ```
 
+<br />
+
 > room 생성 => socket의 join 함수로 쉽게 생성 할 수 있다.
 
 ```
      socket.join("room 의 이름");
 ```
 
+<br />
+
 > disconnecting과 disconnect의 차이
 
 ```
     disconnecting => 방을 나가기 직전 / disconnect 방을 나간 후 
 ```
+
+<br />
 
 ## JavaScript
 
@@ -178,10 +213,15 @@ server.js
     });
 ```
 
+<br />
 
 ---
 
+<br />
+
 ## admin
+
+<br />
 
 > socket에서 채팅방과 유저의 데이터들을 볼 수 있는 어드민 페이지를 제공해준다. 
 
@@ -197,6 +237,8 @@ server.js
     });
 ```
 
+<br />
+
 server.js 
 ```
     instrument(wsServer, {
@@ -205,6 +247,96 @@ server.js
     //어드민 페이지 로그인을 위한 설정 => false 해준 이유는 별 다른 로그인 없이 볼 수 있게 설정
 ```
 
+<br />
+
 > https://admin.socket.io 여기에 접속하면 admin 페이지 볼 수 있다. 
 <img src="./admin.png"  width="700" height="370">
 
+<br />
+
+## getCamera 
+> 브라우정에 카메라를 키는건 어렵지 않다. 서버는 기본 설정만 해주고 대부분이 js에서 작업
+
+<br />
+<br />
+
+> 어떤 카메라가 있는지 파악하는 함수
+
+```
+    async function getCameras(){
+        try{
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            //유저가 가지고 있는 모든 메디아 정보
+            
+            const cameras = devices.filter(device => device.kind === "videoinput");
+            //디바이스 중에서 카메라 정보만 가져오기
+
+            const currentCamera = myStream.getVideoTracks()[0];
+            //현재 켜져있는 카메라
+
+            cameras.forEach(camera => {
+                const option = document.createElement("option");
+                option.value = camera.deviceId;
+                option.innerText = camera.label;
+                if(currentCamera.label == camera.label){
+                    option.selected = true;
+                    //현재 선택된 카메라가 셀렉트 박스 젤 위에 보이게
+                }
+                camerasSelect.appendChild(option);
+            })
+
+        }catch(e){
+            console.log(e)
+        }
+    }
+```
+<br />
+<br />
+
+> 카메라 정보를 가져와서 선택하는 함수
+```
+    async function getMedia(deviceId){
+        const initioalConstrains = {
+            audio: true,
+            video: { facingMode: "user"},  //브라우저든 모바일이든 무조건 셀카 카메라로 작동
+        }
+        const cameraConstraints = {
+            audio: true,
+            video: {
+                deviedId: {exact: deviceId }  //exact 없이 적어주면 해당 아이디값의 카메라가 없을떄, 비디오가 실행 안된다. 
+                //근데 위와 같이 적으면 카메라 찾다가 못찾으면 다른 카메라 실행
+            }
+        }
+        try{
+            myStream = await navigator.mediaDevices.getUserMedia(
+                deviceId ? cameraConstraints : initioalConstrains
+            )        
+            // myStream 이라는 변수에 현재 가지고 있는 미디어 장치에 접근하는 방식
+            // 가지고 오고싶은 정보를 객체 형식으로 파라미터로 넣어준다
+            myFace.srcObject = myStream;
+            if(!deviceId){
+                await getCameras();
+                //젤 처음만 실행하면됨. 카메라 변경할때마다 실행되면 selectbox 길어짐
+            }
+        } catch(e){
+            console.log(e);
+        }
+    }
+```
+
+<br />
+<br />
+
+> 당연히 카메라는 키고 끌 수 있다.
+```
+    function handlecameraClick(){
+        myStream.getVideoTracks().forEach(track =>  track.enabled = !track.enabled);
+        if(!cameraOff){
+            camera.innerText = "Turn Camera Off";
+            cameraOff = true;
+        }else{
+            cameraOff = false;
+            camera.innerText = "Turn Camera On";
+        }
+    }
+```
