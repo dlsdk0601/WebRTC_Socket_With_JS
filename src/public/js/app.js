@@ -47,7 +47,7 @@ async function getCameras(){ //어떤 카메라를 쓸지 생성하는 함수
     }catch(e){
         console.log(e)
     }
-}
+};
 
 async function getMedia(deviceId){
     const initioalConstrains = {
@@ -104,6 +104,19 @@ function handlecameraClick(){
 
 async function handleCameraChange(){
     await getMedia(camerasSelect.value); 
+    //카메라 바꿔줌
+    if(myPeerConnection){
+        // 누군가와 채팅중이라면 
+
+        const videoTrack = mystream.getVideoTracks()[0];
+        //현재 비디오 정보 
+        console.log(myPeerConnection.getSenders());
+        const videoSender = myPeerConnection.getSenders().find(sender => sender.track.kind === "video");
+        //지금 현재 가지고 있는 메디아 중 비디오만 선택
+        
+        videoSender.replaceTrack(videoTrack);
+        //현재 카메라 대신 다른 카레마 replace
+    }
 }
 
 mute.addEventListener("click", handlemuteClick);
@@ -155,22 +168,64 @@ socket.on("offer", async (offer) => {
 
     myPeerConnection.setRemoteDescription(offer);
     const answer = await myPeerConnection.createAnswer();
-    myPeerConnection.setLocalDescription(offer);
+    myPeerConnection.setLocalDescription(answer);
     socket.emit("answer", answer, roomName);
+    console.log("sned the answer");
 })
 
 socket.on("answer", answer => {
-    myPeerConnection.setRemoteDescription(offer);
+    console.log("take the answer");
+    myPeerConnection.setRemoteDescription(answer);
 })
 
+socket.on("ice", ice => {
+    console.log("take candidate");
+    myPeerConnection.addIceCandidate(ice);
+})
 
 //----------------RTC code
 function makeconnection(){
-    myPeerConnection = new RTCPeerConnection();
+    myPeerConnection = new RTCPeerConnection({
+        iceServers: [
+            {
+                urls: [
+                    "stun:stun.l.google.com:19302",
+                    "stun:stun1.l.google.com:19302",
+                    "stun:stun2.l.google.com:19302",
+                    "stun:stun3.l.google.com:19302",
+                    "stun:stun4.l.google.com:19302",
+                ]
+            }
+        ]
+    });
+    //stun server 핸드폰으로 들어오면 오류 난다(같은 와이파이를 쓰면 오류 안남)
+    // 즉 핸드폰을 쓰는 상대방을 찾아줘야함. (사실 pc는 어케 찾아주는지 모르겠음, 왜 자동으로 됐는지 의문)
+    //stun server는 어떤 것을 request하면 인터넷에서 상대가 누군지 알려주는 서버
+    // 전문적으로 할꺼면 만들어야하나, 구글 무료 서버를 쓴다. 
+
+    myPeerConnection.addEventListener("icecandidate", handleIce); //멀리 떨어진 장치를 연결 시켜주는 프로토콜
+    myPeerConnection.addEventListener("addstream", handleAddstream);
     myStream.getTracks().forEach( track => myPeerConnection.addTrack(track, myStream))
     // Tracks(비디오와 오디오 정보)를 가져와서 myStream에 추가하는 과정
+
     
-    
+}
+
+function handleIce(data){
+    console.log("got ice candidate");
+    console.log("send candidate");
+    console.log(data);
+
+    socket.emit("ice", data.candidate, roomName);
+}
+
+function handleAddstream(data){
+    console.log("take event from my peer");
+    console.log("peer's Stram", data.stream);
+    console.log("my Stram", myStream);
+
+    const peersStream = document.querySelector("#peersStream");
+    peersStream.srcObject = data.stream;
 }
 
 //--------------------------with socket.io

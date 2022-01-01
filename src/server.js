@@ -29,8 +29,9 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 //------------------video call
 wsServer.on("connection", socket => {
     
-    socket.on("join_room", (roomName, done) => {
+    socket.on("join_room", (roomName) => {
         socket.join(roomName);
+        socket.to(roomName).emit("welcome");
     });
 
     socket.on("offer", (offer, roomName) => {
@@ -39,10 +40,14 @@ wsServer.on("connection", socket => {
         //그 offer를 해당 room에 다시 보내줘야한다. 
         // 채팅이 서버를 통해서 전달이 아닌 브라우자 랑 브라우저의 이벤트 이므로 서버는 각자의 주소만 알려주는 역할
         //그래서 offer를 받아서 다시 offer를 뿌려준다
-    })
+    }) 
 
-    socket.on("answer", (answer, roomNamer) => {
+    socket.on("answer", (answer, roomName) => {
         socket.to(roomName).emit("answer", answer);
+    });
+
+    socket.on("ice", (ice, roomName) => {
+        socket.to(roomName).emit("ice", ice);
     })
 
 })
