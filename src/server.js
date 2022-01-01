@@ -21,12 +21,31 @@ app.use("/public", express.static(__dirname + "/public"));
 app.get("/", (req, res) => res.render("home"));
 app.get("/*", (req, res) => res.redirect("/"));
 
+
 const handleListen = () => console.log(`Listening on http://localhost:3000`);
 // app.listen(3000, handleListen);
 //이렇게 작성하는거는 일반 브라우저 방식, 소켓은 ws프로토콜로 작업해야함
 
 //------------------video call
+wsServer.on("connection", socket => {
+    
+    socket.on("join_room", (roomName, done) => {
+        socket.join(roomName);
+    });
 
+    socket.on("offer", (offer, roomName) => {
+        socket.to(roomName).emit("offer", offer);
+        // 프론트단에 누가 방에 들어와서 offer를 서버에 주면 
+        //그 offer를 해당 room에 다시 보내줘야한다. 
+        // 채팅이 서버를 통해서 전달이 아닌 브라우자 랑 브라우저의 이벤트 이므로 서버는 각자의 주소만 알려주는 역할
+        //그래서 offer를 받아서 다시 offer를 뿌려준다
+    })
+
+    socket.on("answer", (answer, roomNamer) => {
+        socket.to(roomName).emit("answer", answer);
+    })
+
+})
 
 
 

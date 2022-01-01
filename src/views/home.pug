@@ -11,12 +11,17 @@ html(lang="en")
         h1 It works!
     main    
         //- video call
-        div#myStream
-            video#myFace(autoplay, playsinline, width="400", height="400")
-            button#mute Mute
-            button#camera trun Camre Off
-            select#cameras
-                option(value="device") Face Camera
+        div#welcome 
+            form 
+                input(placeholder="room name", requried, type="text")
+                button Enter
+        div#call
+            div#myStream
+                video#myFace(autoplay, playsinline, width="400", height="400")
+                button#mute Mute
+                button#camera trun Camre Off
+                select#cameras
+                    option(value="device") Face Camera
         //- playsinline => 모바일 버전에서 가끔 전체화면으로 재생되는 경우가있는데 그걸 방지하는 속성
 
 

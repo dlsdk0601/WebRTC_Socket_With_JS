@@ -1,3 +1,5 @@
+
+
 const socket = io();
 //io는 아마도 socket 설치하고 생긴 함수(내장된 함수 일수도.) 이 함수를 통해서 백엔드와 연결시켜준다 
 
@@ -9,9 +11,16 @@ const mute = document.querySelector("#mute");
 const camera = document.querySelector("#camera");
 const camerasSelect = document.querySelector("#cameras");
 
+const welcome = document.querySelector("#welcome");
+const call = document.querySelector("#call");
+
 let myStream;
 let muted = false;
 let cameraOff = false;
+let roomName;
+let myPeerConnection;
+
+call.hidden = true;
 
 async function getCameras(){ //어떤 카메라를 쓸지 생성하는 함수
     try{
@@ -68,9 +77,6 @@ async function getMedia(deviceId){
     }
 }
 
-getMedia();
-
-
 function handlemuteClick(){
     myStream.getAudioTracks().forEach( track => track.enabled = !track.enabled);
     //오디오 동작을 false 시켜줌
@@ -84,7 +90,6 @@ function handlemuteClick(){
         mute.innerText = "Mute";
     }
 }
-
 
 function handlecameraClick(){
     myStream.getVideoTracks().forEach(track =>  track.enabled = !track.enabled);
@@ -104,6 +109,69 @@ async function handleCameraChange(){
 mute.addEventListener("click", handlemuteClick);
 camera.addEventListener("click", handlecameraClick);
 camerasSelect.addEventListener("input", handleCameraChange); 
+
+
+// --------------------- welcoem Form (choose a room)
+
+welcomeForm = welcome.querySelector("form");
+
+async function startMedia(){
+    welcome.hidden = true;
+    call.hidden = false;
+
+    await getMedia();
+    makeconnection();
+}
+
+async function handleWelcomeSubmit(e){
+    e.preventDefault();
+    const input = welcomeForm.querySelector("input");
+    await startMedia();
+    socket.emit("join_room", input.value);
+    roomName = input.value;
+    input.value = "";
+}
+
+welcomeForm.addEventListener("submit", handleWelcomeSubmit);
+
+// ---------------------------socket code
+
+// someone joined
+socket.on("welcome", async () => {
+    // 누군가가 방에 들어오면 원래 방에 있던 브라우저에 실행되는 함수
+    
+    const offer = await myPeerConnection.createOffer();
+    //다른 브라우저가 방에 참여 할 수있게 해주는 초대장 
+
+    myPeerConnection.setLocalDescription(offer);
+
+    socket.emit("offer", offer, roomName);
+    console.log("send the Offer");
+})
+
+socket.on("offer", async (offer) => {
+    //방에 들어온 누군가의 브라우저에 실행되는 함수
+    console.log("take the Offer");
+
+    myPeerConnection.setRemoteDescription(offer);
+    const answer = await myPeerConnection.createAnswer();
+    myPeerConnection.setLocalDescription(offer);
+    socket.emit("answer", answer, roomName);
+})
+
+socket.on("answer", answer => {
+    myPeerConnection.setRemoteDescription(offer);
+})
+
+
+//----------------RTC code
+function makeconnection(){
+    myPeerConnection = new RTCPeerConnection();
+    myStream.getTracks().forEach( track => myPeerConnection.addTrack(track, myStream))
+    // Tracks(비디오와 오디오 정보)를 가져와서 myStream에 추가하는 과정
+    
+    
+}
 
 //--------------------------with socket.io
 // const welcome = document.querySelector("#welcome");
