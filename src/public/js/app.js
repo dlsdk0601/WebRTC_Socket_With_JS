@@ -13,14 +13,18 @@ const camerasSelect = document.querySelector("#cameras");
 
 const welcome = document.querySelector("#welcome");
 const call = document.querySelector("#call");
+const textChat = document.querySelector("#textChat");
+const textForm = document.querySelector("#textForm");
 
 let myStream;
 let muted = false;
 let cameraOff = false;
 let roomName;
 let myPeerConnection;
+let myDataChannel;
 
 call.hidden = true;
+textChat.hidden = true;
 
 async function getCameras(){ //어떤 카메라를 쓸지 생성하는 함수
     try{
@@ -128,19 +132,25 @@ camerasSelect.addEventListener("input", handleCameraChange);
 
 welcomeForm = welcome.querySelector("form");
 
-async function startMedia(){
-    welcome.hidden = true;
-    call.hidden = false;
 
-    await getMedia();
-    makeconnection();
+async function startMedia(count){
+    if(count > 1){
+        alert("this room was already full");   
+    }else{
+        welcome.hidden = true;
+        call.hidden = false;
+        textChat.hidden = false;
+
+        await getMedia();
+        makeconnection();
+    }
 }
 
 async function handleWelcomeSubmit(e){
     e.preventDefault();
     const input = welcomeForm.querySelector("input");
-    await startMedia();
-    socket.emit("join_room", input.value);
+    // await startMedia();
+    socket.emit("join_room", input.value, startMedia);
     roomName = input.value;
     input.value = "";
 }
@@ -149,10 +159,37 @@ welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 
 // ---------------------------socket code
 
+textForm.addEventListener("submit", (e) =>{
+        
+    e.preventDefault();
+    const input = textForm.querySelector("#textInput");
+    const msg = input.value;
+    
+    myDataChannel.onopen = function(event){
+        myDataChannel?.send(msg);
+    }
+    
+    const li = document.createElement("li");
+    li.innerText = msg;
+    textForm.appendChild(li);
+})
+
 // someone joined
 socket.on("welcome", async () => {
     // 누군가가 방에 들어오면 원래 방에 있던 브라우저에 실행되는 함수
     
+    
+    //"chat" 이라는 data channel 만들기
+    myDataChannel = myPeerConnection.createDataChannel("chat");  //먼저 들어온 사람이 data channel 정의 
+    myDataChannel.addEventListener("message", (event) => {
+        // 보내는 채팅 evnet.data
+        console.log(event.data);
+        // const li = document.createElement("li");
+        // li.innerText = event.data;
+        // textForm.appendChild(li);
+    })
+    console.log("make data channel");
+
     const offer = await myPeerConnection.createOffer();
     //다른 브라우저가 방에 참여 할 수있게 해주는 초대장 
 
@@ -165,6 +202,19 @@ socket.on("welcome", async () => {
 socket.on("offer", async (offer) => {
     //방에 들어온 누군가의 브라우저에 실행되는 함수
     console.log("take the Offer");
+
+    //datachannel이 있다면 이벤트 실행
+    myPeerConnection.addEventListener("datachannel", (event) => {
+        myDataChannel = event.channel; //나중에 들어온 사람이 data channel 정의하는 법
+        myDataChannel.addEventListener("message", event => {
+            //받는 채팅
+            console.log(event.data)
+
+            const li = document.createElement("li");
+            li.innerText = event.data;
+            textForm.appendChild(li);
+        });
+    })
 
     myPeerConnection.setRemoteDescription(offer);
     const answer = await myPeerConnection.createAnswer();

@@ -6,23 +6,30 @@ html(lang="en")
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
         title Document
         link(rel="stylesheet", href="https://unpkg.com/mvp.css")
+        //- link(rel="stylesheet", href="./home.css")
     body 
     header 
-        h1 It works!
+        h1 Zoom Clone!
     main    
         //- video call
-        div#welcome 
-            form 
-                input(placeholder="room name", requried, type="text")
-                button Enter
-        div#call
-            div#myStream
-                video#myFace(autoplay, playsinline, width="400", height="400")
-                button#mute Mute
-                button#camera trun Camre Off
-                select#cameras
-                    option(value="device") Face Camera
-            video#peersStream(autoplay, playsinline, width="400", height="400")
+        div#videoChat
+            div#welcome 
+                form 
+                    input(placeholder="room name", requried, type="text")
+                    button Enter
+            div#call
+                div#myStream
+                    video#myFace(autoplay, playsinline, width="400", height="400")
+                    button#mute Mute
+                    button#camera trun Camre Off
+                    select#cameras
+                        option(value="device") Face Camera
+                video#peersStream(autoplay, playsinline, width="400", height="400")
+        div#textChat 
+            ul
+            form#textForm
+                input#textInput(placeholder="write a message", type="text")
+                button#send Send
         //- playsinline => 모바일 버전에서 가끔 전체화면으로 재생되는 경우가있는데 그걸 방지하는 속성
 
 

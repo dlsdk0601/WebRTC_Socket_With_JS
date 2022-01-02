@@ -29,9 +29,15 @@ const handleListen = () => console.log(`Listening on http://localhost:3000`);
 //------------------video call
 wsServer.on("connection", socket => {
     
-    socket.on("join_room", (roomName) => {
-        socket.join(roomName);
-        socket.to(roomName).emit("welcome");
+    socket.on("join_room", (roomName, startMedia) => {
+        let count = wsServer.sockets.adapter.rooms.get(roomName)?.size;
+        if( count > 1){
+            startMedia(count);
+        }else{
+            socket.join(roomName);
+            socket.to(roomName).emit("welcome", count);
+            startMedia(count);
+        }
     });
 
     socket.on("offer", (offer, roomName) => {

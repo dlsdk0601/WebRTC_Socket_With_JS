@@ -340,3 +340,45 @@ server.js
         }
     }
 ```
+
+## WebRTC 
+
+> 별도의 플러그인 없이 브라웆간 비디오, 음성 데이터등을 p2p로 통실 할 수있게 해주는 표준
+
+```
+    let myPeerConnection = new RTCPeerConnection();
+```
+
+<br />
+
+> 개발단계에서는 구글에서 제공해주는 무료 stun 서버를 활용한다. 전문적인 프로젝트라면 stun 서버를 제작해야 한다.
+
+```
+    let myPeerConnection = new RTCPeerConnection({
+        iceServers: [
+            {
+                urls: [
+                    "stun:stun.l.google.com:19302",
+                    "stun:stun1.l.google.com:19302",
+                    "stun:stun2.l.google.com:19302",
+                    "stun:stun3.l.google.com:19302",
+                    "stun:stun4.l.google.com:19302",
+                ]
+            }
+        ]
+    });
+```
+
+<br />
+
+> 아래 사진을 보며 단계 대로 서버와 필요한 정보를 주고 받으면서 
+상대의 미디어 정보, ip 정보등을 받아서 연결 시킨다. 
+
+<img src="./diagram.png" width="500" height="500" />
+
+<br />
+
+## Data channel
+
+> 서로 원하는 모든 것을 주고 받을 수 잇게 해준다. socket.io없이 채팅도 가능
+ 서로 파일 전송도 가능
