@@ -382,3 +382,9 @@ server.js
 
 > 서로 원하는 모든 것을 주고 받을 수 잇게 해준다. socket.io없이 채팅도 가능
  서로 파일 전송도 가능
+
+```
+    let myDataChannel; 
+    myDataChannel = myPeerConnection.createDataChannel("chat");
+```
+

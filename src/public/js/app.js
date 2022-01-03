@@ -133,24 +133,26 @@ camerasSelect.addEventListener("input", handleCameraChange);
 welcomeForm = welcome.querySelector("form");
 
 
-async function startMedia(count){
+async function startMedia(){
+        await getMedia();
+        makeconnection();
+}
+
+function hiddenWelcome(count){
     if(count > 1){
-        alert("this room was already full");   
+        alert("this room is full")
     }else{
         welcome.hidden = true;
         call.hidden = false;
         textChat.hidden = false;
-
-        await getMedia();
-        makeconnection();
     }
 }
 
 async function handleWelcomeSubmit(e){
     e.preventDefault();
     const input = welcomeForm.querySelector("input");
-    // await startMedia();
-    socket.emit("join_room", input.value, startMedia);
+    await startMedia();
+    socket.emit("join_room", input.value, hiddenWelcome);
     roomName = input.value;
     input.value = "";
 }
@@ -160,18 +162,16 @@ welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 // ---------------------------socket code
 
 textForm.addEventListener("submit", (e) =>{
-        
+    // 본인이 submmit 했을때 채팅창에 뜨게 
     e.preventDefault();
     const input = textForm.querySelector("#textInput");
     const msg = input.value;
     
-    myDataChannel.onopen = function(event){
-        myDataChannel?.send(msg);
-    }
-    
+    myDataChannel?.send(msg);
     const li = document.createElement("li");
     li.innerText = msg;
     textForm.appendChild(li);
+    input.value = "";
 })
 
 // someone joined
@@ -183,10 +183,11 @@ socket.on("welcome", async () => {
     myDataChannel = myPeerConnection.createDataChannel("chat");  //먼저 들어온 사람이 data channel 정의 
     myDataChannel.addEventListener("message", (event) => {
         // 보내는 채팅 evnet.data
+
         console.log(event.data);
-        // const li = document.createElement("li");
-        // li.innerText = event.data;
-        // textForm.appendChild(li);
+        const li = document.createElement("li");
+        li.innerText = event.data;
+        textForm.appendChild(li);
     })
     console.log("make data channel");
 
@@ -208,8 +209,9 @@ socket.on("offer", async (offer) => {
         myDataChannel = event.channel; //나중에 들어온 사람이 data channel 정의하는 법
         myDataChannel.addEventListener("message", event => {
             //받는 채팅
-            console.log(event.data)
+            console.log(event.data);
 
+            //받는 사람 채팅창에 뜨게 
             const li = document.createElement("li");
             li.innerText = event.data;
             textForm.appendChild(li);
