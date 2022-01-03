@@ -2,6 +2,67 @@
 
 > socket.io와 Websockets을 공부 하기 위한 레파지토리입니다!
 
+## media 정보
+
+> 유저가 가지고 있는 모든 미디어 정보
+
+```
+    const devices = await navigator.mediaDevices.enumerateDevices();
+```
+
+<br />
+
+> 디바이스 중에서 카메라 정보만 가져오기
+
+```
+    const cameras = devices.filter(device => device.kind === "videoinput");
+```
+
+<br />
+
+> 현재 켜져있는 카메라
+
+```
+    const currentCamera = myStream.getVideoTracks()[0];
+```
+
+<br />
+
+> 카메라 정보를 가져왔다면 그 카메라는 비디오 태그에 켜보기
+
+```
+    async function getMedia(deviceId){
+        const initioalConstrains = {
+            audio: true,
+            video: { facingMode: "user"},  //브라우저든 모바일이든 무조건 셀카 카메라로 작동
+        }
+
+        const cameraConstraints = {
+            audio: true,
+            video: {
+                deviedId: {exact: deviceId } 
+                 //exact 없이 적어주면 해당 아이디값의 카메라가 없을떄, 비디오가 실행 안된다. 
+                //근데 위와 같이 적으면 카메라 찾다가 못찾으면 다른 카메라 실행
+            }
+        }
+        
+        try{
+            myStream = await navigator.mediaDevices.getUserMedia(
+                deviceId ? cameraConstraints : initioalConstrains
+            )        
+            // myStream 이라는 변수에 현재 가지고 있는 미디어 장치에 접근하는 방식
+            // 가지고 오고싶은 정보를 객체 형식으로 파라미터로 넣어준다
+            myFace.srcObject = myStream;
+            if(!deviceId){
+                await getCameras();
+                //젤 처음만 실행하면됨. 카메라 변경할때마다 실행되면 selectbox 길어짐
+            }
+        } catch(e){
+            console.log(e);
+        }
+    }
+```
+
 ## nodeJs
 
 > websocket 서버 셋팅 
@@ -386,5 +447,30 @@ server.js
 ```
     let myDataChannel; 
     myDataChannel = myPeerConnection.createDataChannel("chat");
+```
+
+> 채팅을 보내는 (이미 채팅방 들어와 있는 유저) 유저 event
+
+```
+     myDataChannel.addEventListener("message", (event) => {
+        const li = document.createElement("li");
+        li.innerText = event.data;
+        textForm.appendChild(li);
+    })
+```
+
+<br />
+
+> 채팅을 받는 유저
+
+```
+    myPeerConnection.addEventListener("datachannel", (event) => {
+        myDataChannel = event.channel;
+        myDataChannel.addEventListener("message", event => {
+            const li = document.createElement("li");
+            li.innerText = event.data;
+            textForm.appendChild(li);
+        });
+    })
 ```
 
